@@ -11,8 +11,8 @@
 ### 3. `linear_solver.py`：把題目 $A\vec{x} = \vec{b}$ 合併成增廣矩陣，丟給 `gauss.py` 計算結果。
 * **#TODO 任務**：檢查 Consistency，計算答案。
 * `test_consistency`：尋找 RREF 矩陣中是否出現 `[0, 0, ..., 0 | 非零數字]` 的矛盾列。如果有，就代表方程式無解，回傳 `False`。
-* `generate_solution`：如果是無限多組解，規定要把 Free variables 預設為 `1`。我寫了邏輯去找出 Pivot 所在的欄位（基本變數），並將等號右邊的值減去自由變數的影響，計算出最終的解 $\vec{x}$。
-* `solve_linear_equations`：合併 $A$ 和 $b$ 成增廣矩陣，呼叫高斯消去法，檢查一致性，最後產出解答。
+* `generate_solution`：如果是無限多組解，規定要把 Free variables 預設為 `1`。我去找出 Pivot 所在的欄位，並將等號右邊的值減去自由變數，計算出一組解 $\vec{x}$。
+* `solve_linear_equations`：合併 $A$ 和 $b$ 成增廣矩陣，用高斯消去法檢查一致性，最後算出解答。
 
 ### 4. `test_linear_solver.py`
 * **#TODO 任務**：計算誤差向量 $A\vec{x} - \vec{b}$ 的 L2 範數 (Euclidean distance)，看它是不是趨近於零。
