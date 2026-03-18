@@ -1,5 +1,6 @@
 import torch
 import time # 計時用的!
+import pandas as pd
 from linear_solver import solve_linear_equations
 from matrices_vectors import matrix_vector_product, matrix_sum, scalar_matrix
 
@@ -90,25 +91,17 @@ b_inconsistent = torch.tensor([[10], [20], [5], [15]], dtype=torch.float32) # b[
 #
 # 1. Minimal Case (2x2 or 3x3):
 #    - Test a simple, manually verifiable system to ensure core logic is sound.
-#
-# 2. Non-Square (Rectangular) Matrices:
-#    - Underdetermined: "Fat" matrix (e.g., 3x5). Does it handle free variables?
-#    - Overdetermined: "Tall" matrix (e.g., 6x3). Test for both consistent 
-#      and inconsistent cases.
-#
-# 3. Large Scale (100x100+):
-#    - Generate a large matrix A and vector x_true. 
-#
-# 4. Report Requirements:
-#    - List the dimensions and properties of your test data.
-#    - Provide the final verification error ||Ax - b|| for each case.
-
 A_minimal = torch.tensor([
     [1, 2],
     [4, 5]
 ], dtype=torch.float32)
 b_minimal = torch.tensor([[3], [6]], dtype=torch.float32)
 
+
+# 2. Non-Square (Rectangular) Matrices:
+#    - Underdetermined: "Fat" matrix (e.g., 3x5). Does it handle free variables?
+#    - Overdetermined: "Tall" matrix (e.g., 6x3). Test for both consistent 
+#      and inconsistent cases.
 A_under = torch.tensor([
     [1, 2, 3, 4, 5],
     [2, 5, 1, 3, 2],
@@ -123,24 +116,28 @@ A_over_c = torch.tensor([
     [1, 0, -2],
     [4, 3, 1]
 ], dtype=torch.float32)
-b_over_c = torch.tensor([[6], [1], [7], [-5], [13]], dtype=torch.float32)
 
+b_over_c = torch.tensor([[6], [1], [7], [-5], [13]], dtype=torch.float32)
 b_over_i = torch.tensor([[6], [1], [7], [-5], [99]], dtype=torch.float32)
 
+# 3. Large Scale (100x100+):
+#    - Generate a large matrix A and vector x_true. 
+torch.manual_seed(7)
+A_large = torch.randint(-10, 11, (100, 100), dtype=torch.float32)
+x_true_large = torch.randint(-10, 11, (100, 1)).to(torch.float32)
+b_large = matrix_vector_product(A_large, x_true_large)
 
-A_large = torch.randn((100, 100), dtype=torch.float32)
-x_true_large = torch.ones((100, 1), dtype=torch.float32)
-b_large = torch.matmul(A_large, x_true_large)
+# 4. Report Requirements:
+#    - List the dimensions and properties of your test data.
+#    - Provide the final verification error ||Ax - b|| for each case.
 
 if __name__ == "__main__":
     run_test(A_consistent, b_consistent, "Consistent Case")
     run_test(A_inconsistent, b_inconsistent, "Inconsistent Case")
 
     print("============== BONUS ==============\n")
-    run_test(A_minimal, b_minimal, "Minimal 3x3 Case")
-    run_test(A_under, b_under, "Underdetermined 3x5 Case")
-    run_test(A_over_c, b_over_c, "Overdetermined 5x3 Consistent Case")
-    run_test(A_over_c, b_over_i, "Overdetermined 5x3 Inconsistent Case")
-    run_test(A_large, b_large, "Large Scale 100x100 Matrix")
-
-    run_test_with_timing(A_large, b_large, "Large Scale 100x100 Matrix")
+    run_test(A_minimal, b_minimal, "Minimal Case: 2x2 Matrix")
+    run_test(A_under, b_under, "Non-Square (Rectangular) Matrices: 3x5 Matrix")
+    run_test(A_over_c, b_over_c, "Non-Square (Rectangular) Matrices: 5x3 Matrix")
+    run_test(A_over_c, b_over_i, "Non-Square (Rectangular) Matrices:5x3 Matrix")
+    run_test(A_large, b_large, "Large Scale Matrix: 100x100 Matrix")
