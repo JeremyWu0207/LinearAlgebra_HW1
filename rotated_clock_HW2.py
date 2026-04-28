@@ -21,48 +21,22 @@ def draw_clock_system(canvas, center_pos, hour_hand_pos, minute_hand_pos, color,
     cv2.line(canvas, pt_center, pt_minute, color, mh_thickness)
     return canvas
 
-def normalize_to_image_coordinate_homogeneous(logic_vec, image_scale, canvas_center_list, canvas_height):
+def normalize_to_image_coordinate(logic_vec, image_scale, canvas_center_vector, canvas_height):
     """
-    Transforms a vector using Homogeneous Coordinates (3x3 matrices).
-    Logic: V_img = [T_offset] * [F] * [T_center] * [S] * V_homogeneous
+    Transforms a vector from mathematical coordinate system to image coordinate system.
+    Note: Mathematical Y points up, but Image Y points down.
     """
-    # 0. Prepare 3D Homogeneous Vector: [x, y] -> [x, y, 1]^T
-    v_h = torch.cat((logic_vec, torch.tensor([[1.0]], dtype=torch.float32)), dim=0)
-    vec_img_h = v_h.clone()
-    
-    # TODO: Step 1: Prepare the 3x3 scale matrix: S ---
-    S = torch.zeros((3, 3), dtype=torch.float32)#創建一個用來線性縮放的矩陣
-    S[0][0] = image_scale
-    S[1][1] = image_scale
-    S[2][2] = 1.0
-    # TODO: Step 2: Prepare the 3x3 matrix for aligning to center: T_center---
-    T_center = torch.zeros((3, 3), dtype=torch.float32)
-    T_center[0][0] = 1.0
-    T_center[1][1] = 1.0
-    T_center[2][2] = 1.0
-    T_center[0][2] = canvas_center_list[0]
-    T_center[1][2] = canvas_center_list[1]
-    # TODO: Step 3: Prepare teh 3x3 matrix for flipping Y: F ---
-    F = torch.zeros((3, 3), dtype=torch.float32)#創造一個用來沿y軸翻轉的矩陣(負值
-    F[0][0] = 1.0
-    F[1][1] = -1.0
-    F[2][2] = 1.0
-    # TODO: Step 4: Prepare the 3x3 matrix for moving origin to top-left: T_offset ---
-    T_offset = torch.zeros((3, 3), dtype=torch.float32)#把y重負值拉回來
-    T_offset[0][0] = 1.0
-    T_offset[1][1] = 1.0
-    T_offset[2][2] = 1.0
-    T_offset[1][2] = canvas_height
-    # TODO: Step 5: Concatenation (Matrix Composition) ---
-    # Hint: Order is crucial: The first operation (S) must be on the far right.
-    M0 = matrix_multiplication(T_offset, F)#按造提示完成矩陣乘法
-    M1 = matrix_multiplication(T_center, S)
-    M2 = matrix_multiplication(M0, M1)
-    # TODO: Final Transformation V_img_h = (composited matrix) * v_h
-    vec_img_h = matrix_vector_product(M2, v_h)
-    # Return the first two components of V_img_h
-    vec_img = vec_img_h[0:2, :]
-
+    vec_img = logic_vec.clone()
+    # TODO: Step 1. Scale the vector length using 'scalar_matrix'
+    vec_img = scalar_matrix(image_scale, vec_img) # 縮放成圖像需求大小
+    canvas_center_vector = torch.tensor(canvas_center_vector, dtype=torch.float32).reshape(2, 1)
+    # TODO: Step 2. Align to center using 'matrix_sum'
+    vec_img = matrix_sum(vec_img,canvas_center_vector) # 重中心點出發
+    # TODO: Step 3. Flip Y direction using 'matrix_vector_product' 
+    #       (Hint: A reflection matrix might be useful here)
+    vec_img = matrix_vector_product(torch.tensor([[1.0,0.0],[0.0,-1.0]] , dtype=torch.float32),vec_img) # 沿x軸翻轉
+    # TODO: Step 4. Move origin to top-left using 'matrix_sum'
+    vec_img = matrix_sum(vec_img,torch.tensor([[0.0],[canvas_height]],dtype = torch.float32)) # 把它推回螢幕
     return vec_img
 
 # --- Physical Simulation Parameters ---
@@ -113,8 +87,8 @@ while hour_angle_deg <= 360:
     # TODO: Use 'matrix_sum' to update hour_pos_img, minute_pos_img, and clock_center_img.
     # Hint: Combine panning_vector_right and the normalized hour/minute/center positions.
     panning_vector_right = torch.tensor([clock_panning_offset, 0.0], dtype=torch.float32).reshape(2, 1)
-    hour_pos_img = normalize_to_image_coordinate_homogeneous(current_hour_vector, image_scale, canvas_center_list, canvas_height)
-    minute_pos_img = normalize_to_image_coordinate_homogeneous(current_minute_vector, image_scale, canvas_center_list, canvas_height)
+    hour_pos_img = normalize_to_image_coordinate(current_hour_vector, image_scale, canvas_center_list, canvas_height)
+    minute_pos_img = normalize_to_image_coordinate(current_minute_vector, image_scale, canvas_center_list, canvas_height)
     clock_center_img = canvas_center_tensor
     #==============================================================
     hour_pos_img = matrix_sum(hour_pos_img, panning_vector_right) # 把指針推到右邊
@@ -127,11 +101,11 @@ while hour_angle_deg <= 360:
     # TODO: Use 'matrix_sum' to update hour_pos_img_mirr, minute_pos_img_mirr, and clock_center_img_mirr.
     # Hint: Combine panning_vector_left and the normalized hour/minute/center positions.
     panning_vector_left = torch.tensor([-clock_panning_offset, 0.0], dtype=torch.float32).reshape(2, 1)
-    hour_pos_img_mirr = normalize_to_image_coordinate_homogeneous(current_hour_vector_mirrored, image_scale, canvas_center_list, canvas_height)
-    minute_pos_img_mirr = normalize_to_image_coordinate_homogeneous(current_minute_vector_mirrored, image_scale, canvas_center_list, canvas_height)
+    hour_pos_img_mirr = normalize_to_image_coordinate(current_hour_vector_mirrored, image_scale, canvas_center_list, canvas_height)
+    minute_pos_img_mirr = normalize_to_image_coordinate(current_minute_vector_mirrored, image_scale, canvas_center_list, canvas_height)
     clock_center_img_mirr = canvas_center_tensor
     #==============================================================
-    hour_pos_img_mirr = matrix_sum(hour_pos_img_mirr     , panning_vector_left) # 把指針推到左邊
+    hour_pos_img_mirr = matrix_sum(hour_pos_img_mirr , panning_vector_left) # 把指針推到左邊
     minute_pos_img_mirr = matrix_sum(minute_pos_img_mirr , panning_vector_left) # 把指針推到左邊
     clock_center_img_mirr = matrix_sum(clock_center_img_mirr , panning_vector_left) # 把指針推到左邊
     #==============================================================
