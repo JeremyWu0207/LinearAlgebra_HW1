@@ -49,6 +49,10 @@ def run_null_space_test(matrix_M, vector_b, matrix_M_basis, test_name):
         # "Verification: PASS (The vector is successfully spanned by the basis)."
         # If not in the span, print the following message
         # "Verification: FAIL (The basis does not span the vector)." 
+        if test_span(matrix_M_basis, vector_b):
+            print("Verification: PASS (The vector is successfully spanned by the basis).")
+        else:
+            print("Verification: FAIL (The basis does not span the vector).")
     else:
         print(f"Status: FAILED")
         print(f"Observation: Vector is NOT in the Null Space of the matrix.")
