@@ -26,10 +26,14 @@ def run_column_space_test(matrix_M, vector_b, matrix_M_basis, test_name):
         # "Verification: PASS (The vector is successfully spanned by the basis)."
         # If not in the span, print the following message
         # "Verification: FAIL (The basis does not span the vector)."
+        
+        # 按照題目要求 透過test_span 來確認他可不可以組合出 vector_b
         if test_span(matrix_M_basis, vector_b):
             print("Verification: PASS (The vector is successfully spanned by the basis).")
+        # 如果不行就跳Fail
         else:
             print("Verification: FAIL (The basis does not span the vector).")
+    # 如果不再column space ->不可能
     else:
         print(f"Status: FAILED")
         print(f"Observation: Vector b is NOT in the Column Space of the matrix.")
@@ -49,6 +53,7 @@ def run_null_space_test(matrix_M, vector_b, matrix_M_basis, test_name):
         # "Verification: PASS (The vector is successfully spanned by the basis)."
         # If not in the span, print the following message
         # "Verification: FAIL (The basis does not span the vector)." 
+        # 在檢查完是不是在Null Space後與 run_column_space_test 上面大致相同
         if test_span(matrix_M_basis, vector_b):
             print("Verification: PASS (The vector is successfully spanned by the basis).")
         else:
